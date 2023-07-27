@@ -1,32 +1,35 @@
+#!/usr/bin/python3
+'''determines if a given data set represents a valid utf-8 encoding'''
+
+
 def validUTF8(data):
-    # Helper function to check if a given number is a valid start byte for UTF-8 character
-    def is_start_byte(byte):
-        return (byte & 0x80) == 0 or (byte & 0xE0) == 0xC0 or (byte & 0xF0) == 0xE0 or (byte & 0xF8) == 0xF0
+    # number of bytes
+    numberOfBytes = 0
 
-    # Helper function to check if a given number is a valid continuation byte for UTF-8 character
-    def is_continuation_byte(byte):
-        return (byte & 0xC0) == 0x80
+    # looping through dataset
+    for num in data:
+        # get binary representation
+        # get least significant 8-bits
+        binaryRepresentation = format(num, '#010b')[-8:]
 
-    # Variable to keep track of the number of continuation bytes needed for the current character
-    num_continuation_bytes = 0
+        # if no bytes then process new utf-8 character
+        if numberOfBytes == 0:
+            # get number of 1s at beginning of string
+            for bit in binaryRepresentation:
+                if bit == '0':
+                    break
+                numberOfBytes += 1
 
-    for byte in data:
-        if num_continuation_bytes > 0:
-            # Check if the current byte is a valid continuation byte
-            if not is_continuation_byte(byte):
+            if numberOfBytes == 0:
+                continue
+
+            if numberOfBytes == 1 or numberOfBytes > 4:
                 return False
-            num_continuation_bytes -= 1
+
         else:
-            # Check if the current byte is a valid start byte for UTF-8 character
-            if not is_start_byte(byte):
+            if not (binaryRepresentation[0] == '1' and binaryRepresentation[1] == '0'):
                 return False
-            # Determine the number of continuation bytes needed based on the start byte
-            if (byte & 0xE0) == 0xC0:
-                num_continuation_bytes = 1
-            elif (byte & 0xF0) == 0xE0:
-                num_continuation_bytes = 2
-            elif (byte & 0xF8) == 0xF0:
-                num_continuation_bytes = 3
 
-    # If all bytes have been processed and there are no remaining continuation bytes needed, it's a valid UTF-8 encoding
-    return num_continuation_bytes == 0
+        numberOfBytes -= 1
+
+    return numberOfBytes == 0
